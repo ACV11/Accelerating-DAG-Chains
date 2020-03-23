@@ -1,7 +1,12 @@
 import numpy
 import networkx
 import matplotlib
-
+import numba
+from numba import njit
+import numpy as np
+import matplotlib.pyplot as plt
+import time
+import pymp
 
 class NewTrans(object):
 	
@@ -61,8 +66,22 @@ class NewTrans(object):
 	def approved_directly_by(self):
 	    return [node for node in self.verifiedbyadjacent if node.available()]
 
+njit()
+def delayTime(arrivalrate):
+	return numpy.random.exponential(scale = 1.0/arrivalrate)
 
+njit(parallel=True)
+def lnu(noOfNodes,nodeArrivalSpeed):
+	l = int(numpy.maximum(0, noOfNodes - 20.0*nodeArrivalSpeed))
+	u = int(numpy.maximum(1, noOfNodes - 10.0*nodeArrivalSpeed))
+	return (l,u)
 
+njit(fastmath=True)
+def prob(alpha,nodeweight,wtlist):
+	deno = numpy.sum(numpy.exp(-alpha * (nodeweight - wtlist)))
+	#print("deno is: ",deno)
+	probs = numpy.divide(numpy.exp(-alpha * (nodeweight - wtlist)),deno)
+	return probs
 
 class NewGraphStructure(object):
 
@@ -87,13 +106,14 @@ class NewGraphStructure(object):
 		else :
 			return y
 
-
 	def GetNextNode(self):
 		# Get Next Transaction rate of arrival is a possion point process
-		DelayTime = numpy.random.exponential(scale = 1.0/self.nodeArrivalSpeed,size = None)
+		#print("Does print work??")
+		DelayTime = delayTime(self.nodeArrivalSpeed)
 		self.currentTime = self.currentTime + DelayTime
 		# Get Available Tips from the Graph Using Weighted Random Walk
 		ListOfTip = set(self.MontyCarloMarkovChain())
+		#print(ListOfTip)
 		NewNode = NewTrans(self,self.currentTime,ListOfTip,self.noOfNodes)
 		self.noOfNodes = self.noOfNodes + 1
 		for node in ListOfTip :
@@ -113,18 +133,23 @@ class NewGraphStructure(object):
 
 	def MontyCarloMarkovChain(self):
 		numWalkers = 10
-		l = int(numpy.maximum(0, self.noOfNodes - 20.0*self.nodeArrivalSpeed))
-		u = int(numpy.maximum(1, self.noOfNodes - 10.0*self.nodeArrivalSpeed))
+		'''
+		l = int(numpy.maximum(0, self.noOfNodes - 20.0*self.nodeArrivalSpeed))#didnt get this
+		u = int(numpy.maximum(1, self.noOfNodes - 10.0*self.nodeArrivalSpeed))#or this
+		'''
+		x = lnu(self.noOfNodes,self.nodeArrivalSpeed)
+		l = x[0]
+		u = x[1]
 		Nodes = self.NodeList[l:u]
 		particles = numpy.random.choice(Nodes, numWalkers)
-		for node in particles:
-			self.RandomWeightedWalk(node)
+		with pymp.Parallel(4) as p:
+			for i in p.iterate(range(len(particles))):
+				self.RandomWeightedWalk(particles[i])
 		unapprovedtransactions = self.traversalpath[:2]
 		self.traversalpath = []
 		return unapprovedtransactions
 
 
-		
 	def RandomWeightedWalk(self, startnode):
 		node = startnode
 		while not node.tipDel() and node.available():
@@ -137,8 +162,7 @@ class NewGraphStructure(object):
 				weightlist = numpy.array([])
 				for i in nextsetofnodes:
 					weightlist = numpy.append(weightlist, i.nodeWeightDel())
-				deno = numpy.sum(numpy.exp(-self.parameterAlpha * (nodeweight - weightlist)))
-				probs = numpy.divide(numpy.exp(-self.parameterAlpha * (nodeweight - weightlist)), deno)
+				probs = prob(self.parameterAlpha,nodeweight,weightlist)
 			else:
 				probs = None
 			node = numpy.random.choice(nextsetofnodes, p=probs)
@@ -162,7 +186,3 @@ class StartNode(NewTrans):
 		self.timestamp = float('inf')
 		self.Id = 0
 		self.graph.graphPlot.add_node(self.Id,pos=(self.createdAtTime,0))
-
-
-
-
