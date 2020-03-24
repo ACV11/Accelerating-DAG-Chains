@@ -91,7 +91,7 @@ class NewGraphStructure(object):
 		self.nodeArrivalSpeed = nodeArrivalSpeed
 		self.parameterAlpha  = parameterAlpha
 		self.graphPlot  = networkx.OrderedDiGraph()
-		self.firstNode = StartNode(self)
+		self.firstNode = NewTrans(self,self.currentTime,ListOfTip,self.noOfNodes)
 		self.NodeList = []
 		self.NodeList.append(self.firstNode)
 		self.noOfNodes += 1
@@ -176,13 +176,3 @@ class NewGraphStructure(object):
 		matplotlib.pyplot.xlabel('Time')
 		matplotlib.pyplot.yticks([])
 		matplotlib.pyplot.show()
-
-class StartNode(NewTrans):
-	def __init__(self, GraphStructure):
-		self.graph = GraphStructure
-		self.createdAtTime = 0
-		self.verifiedNodes = []
-		self.verifiedbyadjacent = set()
-		self.timestamp = float('inf')
-		self.Id = 0
-		self.graph.graphPlot.add_node(self.Id,pos=(self.createdAtTime,0))
