@@ -1,3 +1,9 @@
+'''
+Code to paralleise the IOTA DAG. Look into the random weighted walk and mcmc function for further details.
+Project by Ashish Christopher Victor, AKhilarkha Jayanthi and Atul Anand Gopalakrishnan
+'''
+
+
 import numpy
 import networkx
 import matplotlib
@@ -64,22 +70,6 @@ def nodeWeightDel(p,NewGraphStructure,NewTransObject):
 		#shared_rec.append(end_rec-start_rec)
 	return weight
 
-'''
-def approved_by_delayed(NewGraphStructure,NewTransObject):
-	queue = set(approved_directly_by(NewGraphStructure,NewGraphStructure["NodeList"][NewTransObject]))
-	for Id in queue:
-		queue.update(approved_directly_by(NewGraphStructure,NewGraphStructure["NodeList"][Id]))
-	return queue
-'''
-
-"""
-[a]
-a - b c
-[a b c]
-b - e f
-[a b c e f]
-
-"""
 def approved_by_delayed(NewGraphStructure,NewTransObject):
     for Id in approved_directly_by(NewGraphStructure,NewGraphStructure["NodeList"][NewTransObject]):#NewGraphStructure["NodeList"][Id]=>Node
         if Id not in NewGraphStructure["trans"]:
@@ -192,10 +182,6 @@ def MontyCarloMarkovChain(NewGraphStructure):
 	global globaltime
 	#print(time_shared)
 	globaltime.append(max(time_shared))
-	#global sharedtraversalpath
-	#unapprovedtransactions = [NewGraphStructure["NodeList"][id] for id in sharedtraversalpath[:2]]
-	#sharedtraversalpath = pymp.shared.list()
-	#print("unapp : ",a)
 	return unnaproved
 
 def RandomWeightedWalk(p,NewGraphStructure, startnode):
@@ -226,14 +212,7 @@ def RandomWeightedWalk(p,NewGraphStructure, startnode):
 			probs = None
 		node = numpy.random.choice(nextsetofnodes, p=probs)
 	#print("node : ", node["Id"])
-	return node
-	'''
-	rectime = []
-	with p.lock:
-		if node["Id"] not in sharedtraversalpath :
-			sharedtraversalpath.append(node["Id"])
-	
-	'''		
+	return node	
 
 def plotgrp(NewGraphStructure):
 	pos = networkx.get_node_attributes(graphPlot, 'pos')
