@@ -153,6 +153,10 @@ def tips(NewGraphStructure):
 
 globaltime = []
 globaltime2 = []
+
+'''
+The function helps us select a bunch of unapproved nodes and the incoming transcation can approve that. This is paralleised using pymp on 4 threads.
+'''
 def MontyCarloMarkovChain(NewGraphStructure):
 	numWalkers = 4
 	unnaproved = []
@@ -183,6 +187,10 @@ def MontyCarloMarkovChain(NewGraphStructure):
 	#print(time_shared)
 	globaltime.append(max(time_shared))
 	return unnaproved
+
+'''
+Helps backtrack and identify nodes that are unapproved.
+'''
 
 def RandomWeightedWalk(p,NewGraphStructure, startnode):
 	node = startnode
